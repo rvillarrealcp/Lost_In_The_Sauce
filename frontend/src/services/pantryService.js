@@ -21,7 +21,7 @@ export const createPantryItem = async (token, itemData) => {
     return response.data;
 }
 
-export const updatePantryItem = async (token, id, itemData) => {
+export const updatePantryItem = async (token, id, itemData) => { 
     const response = await axios.put (`${API_URL}pantry/${id}/`, itemData, getAuthHeaders(token));
     return response.data;
 }
