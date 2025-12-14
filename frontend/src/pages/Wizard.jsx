@@ -1,0 +1,235 @@
+import { useState, useEffect } from "react";
+import { useAuth } from '../context/AuthContext';
+import { getPantryItems } from '../services/pantryService';
+import { findRecipesByIngredients, getRecipeDetails } from '../services/externalService';
+import { createRecipe } from '../services/recipeService';
+
+const Wizard = () => {
+  const { token } = useAuth();
+  const [pantryItems, setPantryItems] = useState([]);
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [importing, setImporting] = useState(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const fetchPantry = async () => {
+      try {
+        const data = await getPantryItems(token);
+        setPantryItems(data);
+      } catch (err) {
+        setError("Failed to load pantry items");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPantry();
+  }, [token]);
+
+  const toggleIngredient = (ingredientName) => {
+    setSelectedIngredients((prev) =>
+      prev.includes(ingredientName)
+        ? prev.filter((i) => i !== ingredientName)
+        : [...prev, ingredientName]
+    );
+  };
+
+  const handleSearch = async () => {
+    if (selectedIngredients.length === 0) {
+      setError("Please select at least one ingredient");
+      return;
+    }
+    setError("");
+    setSearching(true);
+    try {
+      const results = await findRecipesByIngredients(
+        token,
+        selectedIngredients
+      );
+      setSearchResults(results);
+    } catch (err) {
+      setError("Failed to find recipes");
+      console.error(err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleImport = async (spoonacularId) => {
+    setImporting(spoonacularId);
+    setError("");
+    setSuccess("");
+    try {
+      const details = await getRecipeDetails(token, spoonacularId);
+      const recipeData = {
+        title: details.title,
+        yield_amount: details.servings || 4,
+        prep_time_minutes: details.preparationMinutes || null,
+        cook_time_minutes:
+          details.cookingMinutes || details.readyInMinutes || null,
+        instructions: details.instructions || "",
+        chef_notes: `Imported from Spoonacular. Source: ${
+          details.sourceUrl || "N/A"
+        }`,
+        ingredients:
+          details.extendedIngredients?.map((ing) => ({
+            ingredient_name: ing.name,
+            quantity: ing.amount || 0,
+            unit: ing.unt || "",
+            prep_note: ing.original || "",
+          })) || [],
+        steps:
+          details.analyzedInstructions?.[0]?.steps?.map((step) => ({
+            step_number: step.number,
+            description: step.step,
+            timer_seconds: null,
+          })) || {},
+      };
+
+      console.log('Recipe data to import:', recipeData)
+
+      await createRecipe(token, recipeData);
+      setSuccess(`"${details.title}" imported successfully!`);
+    } catch (err) {
+        console.error('Import error:', error.response?.data)
+      setError("Failed to import recipe");
+      console.error(err);
+    } finally {
+      setImporting(null);
+    }
+  };
+
+  const filteredPantry = pantryItems.filter((item) =>
+    item.ingredient_name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
+
+  return (
+    <div className="min-h-screen bg-base-200 p-8">
+      <h1 className="text-3xl font-bold mb-8">Zero-Waste Wizard</h1>
+
+      {error && <div className="alert alert-error mb-4">{error}</div>}
+      {success && <div className="alert alert-success mb-4">{success}</div>}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left: Pantry Selection */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Select Ingredients</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Choose ingredients from your pantry to find matching recipes
+            </p>
+            <input
+              type="text"
+              placeholder="Search pantry..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input input-bordered w-full mb-4"
+            />
+
+            <div className="max-h-64 overflow-y-auto space-y-2">
+              {filteredPantry.map((item) => (
+                <label
+                  key={item.id}
+                  className="flex items-center gap-3 cursor-pointer p-2 hover:bg-base-200 rounded"
+                >
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-primary"
+                    checked={selectedIngredients.includes(item.ingredient_name)}
+                    onChange={() => toggleIngredient(item.ingredient_name)}
+                  />
+                  <span>{item.ingredient_name}</span>
+                  <span className="text-sm text-gray-500">
+                    ({item.quantity}
+                    {item.unit})
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {filteredPantry.length === 0 && (
+              <p className="text-gray-500 text-center py-4">
+                No pantry items found
+              </p>
+            )}
+
+            <div className="card-actions justify-between items-center mt-4">
+              <span className="text-sm">
+                {selectedIngredients.length} selected
+              </span>
+              <button
+                onClick={handleSearch}
+                className="btn btn-primary"
+                disabled={searching || selectedIngredients.length === 0}
+              >
+                {searching ? "Searching..." : "Find Recipes"}
+              </button>
+            </div>
+          </div>
+        </div>
+        {/*Right: Recipe Results */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Recipe Suggestions</h2>
+            {searchResults.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                Select ingredients and click "Find Recipes" to see suggestions.
+              </p>
+            ) : (
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {searchResults.map((recipe) => (
+                  <div
+                    key={recipe.id}
+                    className="flex gap-4 p-4 bg-base-200 rounded-lg"
+                  >
+                    {recipe.image && (
+                      <img
+                        src={recipe.image}
+                        alt={recipe.title}
+                        className="w-24 h-24 object-cover rounded"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <h3 className="font-semibold">{recipe.title}</h3>
+                      <p className="text-sm text-gray-500">
+                        Uses {recipe.usedIngredientCount} of your ingredients
+                      </p>
+                      {recipe.missedIngredientCount > 0 && (
+                        <p className="text-sm text-warning">
+                          Missing {recipe.missedIngredientCount} ingredients
+                        </p>
+                      )}
+                      <button
+                        onClick={() => handleImport(recipe.id)}
+                        className="btn btn-sm btn-primary mt-2"
+                        disabled={importing === recipe.id}
+                      >
+                        {importing === recipe.id
+                          ? "Importing..."
+                          : "Import Recipe"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Wizard;

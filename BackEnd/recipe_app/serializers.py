@@ -5,6 +5,9 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = ['id', 'ingredient_name', 'quantity', 'unit', 'prep_note']
+        extra_kwargs = {
+            'unit': {'allow_blank': True}
+        }
 
 class RecipeStepSerializer(serializers.ModelSerializer):
     class Meta:

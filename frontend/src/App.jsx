@@ -8,6 +8,7 @@ import Recipes from './pages/Recipes';
 import RecipeDetail from './pages/RecipeDetail';
 import RecipeForm from './pages/RecipeForm';
 import Pantry from './pages/Pantry'
+import Wizard from './pages/Wizard';
 
 function App() {
   return (
@@ -62,6 +63,12 @@ function App() {
               <Pantry />
             </ProtectedRoute>
           } 
+          />
+          <Route path="/wizard" element ={
+            <ProtectedRoute>
+              <Wizard/>
+            </ProtectedRoute>
+          }
           />
         </Routes>
       </BrowserRouter>

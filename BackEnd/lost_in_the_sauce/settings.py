@@ -166,3 +166,6 @@ ACCOUNT_LOGIN_METHODS = {'username'}
 ACCOUNT_SIGNUP_FIELDS = ['username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_EMAIL_REQUIRED = False
+
+#API Keys
+SPOONACULAR_API_KEY = os.getenv('SPOONACULAR_API_KEY')
