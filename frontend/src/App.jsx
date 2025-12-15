@@ -9,6 +9,7 @@ import RecipeDetail from './pages/RecipeDetail';
 import RecipeForm from './pages/RecipeForm';
 import Pantry from './pages/Pantry'
 import Wizard from './pages/Wizard';
+import Layout from './components/Layout';
 
 function App() {
   return (
@@ -22,7 +23,9 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <Layout>
+                  <Dashboard />
+                </Layout>
               </ProtectedRoute>
             }
           />
@@ -30,7 +33,9 @@ function App() {
             path="/recipes"
             element={
               <ProtectedRoute>
-                <Recipes />
+                <Layout>
+                  <Recipes />
+                </Layout>
               </ProtectedRoute>
             }
           />
@@ -38,7 +43,9 @@ function App() {
             path="/recipes/new"
             element={
               <ProtectedRoute>
-                <RecipeForm />
+                <Layout>
+                  <RecipeForm />
+                </Layout>
               </ProtectedRoute>
             }
           />
@@ -46,7 +53,9 @@ function App() {
             path="/recipes/:id"
             element={
               <ProtectedRoute>
-                <RecipeDetail />
+                <Layout>
+                  <RecipeDetail />
+                </Layout>
               </ProtectedRoute>
             }
           />
@@ -54,21 +63,31 @@ function App() {
             path="/recipes/:id/edit"
             element={
               <ProtectedRoute>
-                <RecipeForm />
+                <Layout>
+                  <RecipeForm />
+                  </Layout>
               </ProtectedRoute>
             }
           />
-          <Route path='/pantry' element={
-            <ProtectedRoute>
-              <Pantry />
-            </ProtectedRoute>
-          } 
+          <Route
+            path="/pantry"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Pantry />
+                </Layout>
+              </ProtectedRoute>
+            }
           />
-          <Route path="/wizard" element ={
-            <ProtectedRoute>
-              <Wizard/>
-            </ProtectedRoute>
-          }
+          <Route
+            path="/wizard"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Wizard />
+                </Layout>
+              </ProtectedRoute>
+            }
           />
         </Routes>
       </BrowserRouter>
