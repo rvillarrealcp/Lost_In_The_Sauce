@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from '../context/AuthContext';
 import { getPantryItems } from '../services/pantryService';
-import { findRecipesByIngredients, getRecipeDetails } from '../services/externalService';
 import { createRecipe } from '../services/recipeService';
+import { findRecipesByIngredients, getRecipeDetails, searchClassicRecipes } from "../services/externalService";
 
 const Wizard = () => {
   const { token } = useAuth();
@@ -15,6 +15,10 @@ const Wizard = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [search, setSearch] = useState("");
+  const [classicResults, setClassicResults] = useState([]);
+  const [searchingClassic, setSearchingClassic] = useState(false);
+  const [classicSearch, setClassicSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('pantry');
 
   useEffect(() => {
     const fetchPantry = async () => {
@@ -57,6 +61,24 @@ const Wizard = () => {
       console.error(err);
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleClassicSearch = async () => {
+    if (!classicSearch.trim()) {
+      setError('Please enter a search term');
+      return;
+    }
+    setError('');
+    setSearchingClassic(true);
+    try{
+      const results = await searchClassicRecipes(token, classicSearch);
+      setClassicResults(results.meals || []);
+    } catch (err) {
+      setError('Failed to search classic recipes');
+      console.error(err)
+    }finally{
+      setSearchingClassic(false);
     }
   };
 
@@ -104,6 +126,52 @@ const Wizard = () => {
     }
   };
 
+  const handleImportClassic = async (meal) => {
+    setImporting(meal.idMeal);
+    setError('');
+    setSuccess('');
+    try{
+      const ingredients = [];
+      for (let i = 1; i <= 20; i++) {
+        const ingredient = meal[`strIngredient${i}`];
+        const measure = meal[`strMeasure${i}`]
+        if (ingredient && ingredient.trim()) {
+          ingredients.push({
+            ingredient_name: ingredient.trim(),
+            quantity:0,
+            unit: measure?.trim() || 'to taste',
+            prep_note: ''
+          });
+        }
+      }
+      const instructionText = meal.strInstructions || '';
+      const stepTexts = instructionText.split(/\r\n|\r|\n/).filter(s => s.trim());
+      const steps = stepTexts.map((text, index) => ({
+        step_number: index +1,
+        description: text.trim(),
+        timer_seconds: null
+      }));
+      const recipeData ={
+        title: meal.strMeal,
+        yield_amount: 4,
+        prep_time_minutes: null,
+        cook_time_minutes: null,
+        instructions: meal.strInstructions || '',
+        chef_notes: `Imported from TheMealDB. Category: ${meal.strCategory || 'N/A'}. Origin: ${meal.strArea || 'N/A'}`,
+        ingredients,
+        steps
+      };
+
+      await createRecipe(token, recipeData);
+      setSuccess(`"${meal.strMeal}" imported successfully!`);
+    }catch(err){
+      setError('Failed to import recipe: ' + JSON.stringify(err.response?.data));
+      console.error(err);
+    } finally{
+      setImporting(null)
+    }
+  };
+
   const filteredPantry = pantryItems.filter((item) =>
     item.ingredient_name.toLowerCase().includes(search.toLowerCase())
   );
@@ -115,121 +183,224 @@ const Wizard = () => {
       </div>
     );
 
-  return (
-    <div className="min-h-screen bg-base-200 p-8">
-      <h1 className="text-3xl font-bold mb-8">Zero-Waste Wizard</h1>
+    return (
+      <div className="min-h-screen bg-base-200 p-8">
+        <h1 className="text-3xl font-bold mb-8">Zero-Waste Wizard</h1>
 
-      {error && <div className="alert alert-error mb-4">{error}</div>}
-      {success && <div className="alert alert-success mb-4">{success}</div>}
+        {error && <div className="alert alert-error mb-4">{error}</div>}
+        {success && <div className="alert alert-success mb-4">{success}</div>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left: Pantry Selection */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">Select Ingredients</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Choose ingredients from your pantry to find matching recipes
-            </p>
-            <input
-              type="text"
-              placeholder="Search pantry..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="input input-bordered w-full mb-4"
-            />
-
-            <div className="max-h-64 overflow-y-auto space-y-2">
-              {filteredPantry.map((item) => (
-                <label
-                  key={item.id}
-                  className="flex items-center gap-3 cursor-pointer p-2 hover:bg-base-200 rounded"
-                >
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={selectedIngredients.includes(item.ingredient_name)}
-                    onChange={() => toggleIngredient(item.ingredient_name)}
-                  />
-                  <span>{item.ingredient_name}</span>
-                  <span className="text-sm text-gray-500">
-                    ({item.quantity}
-                    {item.unit})
-                  </span>
-                </label>
-              ))}
-            </div>
-
-            {filteredPantry.length === 0 && (
-              <p className="text-gray-500 text-center py-4">
-                No pantry items found
-              </p>
-            )}
-
-            <div className="card-actions justify-between items-center mt-4">
-              <span className="text-sm">
-                {selectedIngredients.length} selected
-              </span>
-              <button
-                onClick={handleSearch}
-                className="btn btn-primary"
-                disabled={searching || selectedIngredients.length === 0}
-              >
-                {searching ? "Searching..." : "Find Recipes"}
-              </button>
-            </div>
-          </div>
+        {/* Tabs */}
+        <div className="tabs tabs-boxed mb-6">
+          <button
+            className={`tab ${activeTab === "pantry" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("pantry")}
+          >
+            🥫 Use My Pantry
+          </button>
+          <button
+            className={`tab ${activeTab === "classic" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("classic")}
+          >
+            📚 Search Classic Recipes
+          </button>
         </div>
-        {/*Right: Recipe Results */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">Recipe Suggestions</h2>
-            {searchResults.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
-                Select ingredients and click "Find Recipes" to see suggestions.
-              </p>
-            ) : (
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {searchResults.map((recipe) => (
-                  <div
-                    key={recipe.id}
-                    className="flex gap-4 p-4 bg-base-200 rounded-lg"
-                  >
-                    {recipe.image && (
-                      <img
-                        src={recipe.image}
-                        alt={recipe.title}
-                        className="w-24 h-24 object-cover rounded"
+
+        {activeTab === "pantry" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left: Pantry Selection */}
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title">Select Ingredients</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  Choose ingredients from your pantry to find matching recipes.
+                </p>
+
+                <input
+                  type="text"
+                  placeholder="Search pantry..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="input input-bordered w-full mb-4"
+                />
+
+                <div className="max-h-64 overflow-y-auto space-y-2">
+                  {filteredPantry.map((item) => (
+                    <label
+                      key={item.id}
+                      className="flex items-center gap-3 cursor-pointer p-2 hover:bg-base-200 rounded"
+                    >
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-primary"
+                        checked={selectedIngredients.includes(
+                          item.ingredient_name
+                        )}
+                        onChange={() => toggleIngredient(item.ingredient_name)}
                       />
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{recipe.title}</h3>
-                      <p className="text-sm text-gray-500">
-                        Uses {recipe.usedIngredientCount} of your ingredients
-                      </p>
-                      {recipe.missedIngredientCount > 0 && (
-                        <p className="text-sm text-warning">
-                          Missing {recipe.missedIngredientCount} ingredients
-                        </p>
-                      )}
-                      <button
-                        onClick={() => handleImport(recipe.id)}
-                        className="btn btn-sm btn-primary mt-2"
-                        disabled={importing === recipe.id}
-                      >
-                        {importing === recipe.id
-                          ? "Importing..."
-                          : "Import Recipe"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                      <span>{item.ingredient_name}</span>
+                      <span className="text-sm text-gray-500">
+                        ({item.quantity} {item.unit})
+                      </span>
+                    </label>
+                  ))}
+                </div>
+
+                {filteredPantry.length === 0 && (
+                  <p className="text-gray-500 text-center py-4">
+                    No pantry items found.
+                  </p>
+                )}
+
+                <div className="card-actions justify-between items-center mt-4">
+                  <span className="text-sm">
+                    {selectedIngredients.length} selected
+                  </span>
+                  <button
+                    onClick={handleSearch}
+                    className="btn btn-primary"
+                    disabled={searching || selectedIngredients.length === 0}
+                  >
+                    {searching ? "Searching..." : "Find Recipes"}
+                  </button>
+                </div>
               </div>
-            )}
+            </div>
+
+            {/* Right: Recipe Results */}
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title">Recipe Suggestions</h2>
+
+                {searchResults.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">
+                    Select ingredients and click "Find Recipes" to see
+                    suggestions.
+                  </p>
+                ) : (
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {searchResults.map((recipe) => (
+                      <div
+                        key={recipe.id}
+                        className="flex gap-4 p-4 bg-base-200 rounded-lg"
+                      >
+                        {recipe.image && (
+                          <img
+                            src={recipe.image}
+                            alt={recipe.title}
+                            className="w-24 h-24 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{recipe.title}</h3>
+                          <p className="text-sm text-gray-500">
+                            Uses {recipe.usedIngredientCount} of your
+                            ingredients
+                          </p>
+                          {recipe.missedIngredientCount > 0 && (
+                            <p className="text-sm text-warning">
+                              Missing {recipe.missedIngredientCount} ingredients
+                            </p>
+                          )}
+                          <button
+                            onClick={() => handleImport(recipe.id)}
+                            className="btn btn-sm btn-primary mt-2"
+                            disabled={importing === recipe.id}
+                          >
+                            {importing === recipe.id
+                              ? "Importing..."
+                              : "Import Recipe"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === "classic" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left: Search */}
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title">Search Classic Recipes</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  Search TheMealDB for classic recipes from around the world.
+                </p>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Search recipes (e.g., pasta, curry, chicken)..."
+                    value={classicSearch}
+                    onChange={(e) => setClassicSearch(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleClassicSearch()
+                    }
+                    className="input input-bordered flex-1"
+                  />
+                  <button
+                    onClick={handleClassicSearch}
+                    className="btn btn-primary"
+                    disabled={searchingClassic}
+                  >
+                    {searchingClassic ? "Searching..." : "Search"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Results */}
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <h2 className="card-title">Classic Recipes</h2>
+
+                {classicResults.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">
+                    Search for classic recipes to see results.
+                  </p>
+                ) : (
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {classicResults.map((meal) => (
+                      <div
+                        key={meal.idMeal}
+                        className="flex gap-4 p-4 bg-base-200 rounded-lg"
+                      >
+                        {meal.strMealThumb && (
+                          <img
+                            src={meal.strMealThumb}
+                            alt={meal.strMeal}
+                            className="w-24 h-24 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{meal.strMeal}</h3>
+                          <p className="text-sm text-gray-500">
+                            {meal.strCategory} • {meal.strArea}
+                          </p>
+                          <button
+                            onClick={() => handleImportClassic(meal)}
+                            className="btn btn-sm btn-primary mt-2"
+                            disabled={importing === meal.idMeal}
+                          >
+                            {importing === meal.idMeal
+                              ? "Importing..."
+                              : "Import Recipe"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
 };
 
 export default Wizard;

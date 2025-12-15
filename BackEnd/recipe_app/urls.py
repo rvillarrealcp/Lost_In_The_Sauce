@@ -5,7 +5,8 @@ from .views import(
     PantryListCreateView,
     PantryDetailView,
     find_recipes_by_ingredients,
-    get_recipe_details
+    get_recipe_details,
+    search_classic_recipes
 )
 
 urlpatterns=[
@@ -15,4 +16,5 @@ urlpatterns=[
     path('pantry/<int:pk>/', PantryDetailView.as_view(), name='pantry-detail'),
     path('external/find-recipes/', find_recipes_by_ingredients, name='find-recipes'),
     path('external/recipe/<int:recipe_id>/', get_recipe_details, name='recipe-details'),
+    path('external/search-classic/', search_classic_recipes, name='search-classic')
 ]

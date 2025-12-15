@@ -117,3 +117,24 @@ def get_recipe_details(request, recipe_id):
         return Response(response.json())
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+    
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def search_classic_recipes(request):
+    """Proxy to TheMealDB search endpoint"""
+    query = request.query_params.get('q','')
+    print("Search query:", query)
+    if not query:
+        return Response({'error': 'No search query provided'}, status=400)
+    
+    url = f'https://www.themealdb.com/api/json/v1/1/search.php'
+    params = {'s': query}
+
+    try:
+        print("Making request to:", url)
+        response = requests.get(url, params=params)
+        print("Response status:", response.status_code)
+        return Response(response.json())
+    except Exception as e:
+        print("Error:", str(e))
+        return Response({'error': str(e)}, status=500)

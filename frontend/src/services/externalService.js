@@ -22,3 +22,11 @@ export const getRecipeDetails = async (token, recipeID) => {
     );
     return response.data
 }
+
+export const searchClassicRecipes = async (token,query) => {
+    const response = await axios.get(
+        `${API_URL}external/search-classic/?q=${encodeURIComponent(query)}`,
+        getAuthHeaders(token)
+    );
+    return response.data
+}
