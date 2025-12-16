@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { getPantryItems } from '../services/pantryService';
 import { createRecipe } from '../services/recipeService';
 import { findRecipesByIngredients, getRecipeDetails, searchClassicRecipes } from "../services/externalService";
+import { Package, Search } from 'lucide-react';
 
 const Wizard = () => {
   const { token } = useAuth();
@@ -191,18 +192,22 @@ const Wizard = () => {
         {success && <div className="alert alert-success mb-4">{success}</div>}
 
         {/* Tabs */}
-        <div className="tabs tabs-boxed mb-6">
+        <div className="flex gap-4 mb-6">
           <button
-            className={`tab ${activeTab === "pantry" ? "tab-active" : ""}`}
+            className={`btn ${
+              activeTab === "pantry" ? "btn-primary" : "btn-outline"
+            }`}
             onClick={() => setActiveTab("pantry")}
           >
-            🥫 Use My Pantry
+            <Package size={18} /> Use My Pantry
           </button>
           <button
-            className={`tab ${activeTab === "classic" ? "tab-active" : ""}`}
+            className={`btn ${
+              activeTab === "classic" ? "btn-primary" : "btn-outline"
+            }`}
             onClick={() => setActiveTab("classic")}
           >
-            📚 Search Classic Recipes
+            <Search size={18} /> Search Classic Recipes
           </button>
         </div>
 

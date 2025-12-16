@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { logoutUser } from "../services/authService";
 import { getRecipes } from "../services/recipeService";
 import { getPantryItems } from "../services/pantryService";
 
@@ -45,15 +44,6 @@ const Dashboard = () => {
     fetchStats();
   }, [token]);
 
-  const handleLogout = async () => {
-    try {
-      await logoutUser(token);
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
-    logout();
-    navigate("/login");
-  };
 
   const getExpirationLabel = (expiresOn) => {
     const today = new Date();
@@ -75,13 +65,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-base-200 p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <button onClick={handleLogout} className="btn btn-outline">
-          Logout
-        </button>
-      </div>
-
+      <h1 className="text-3xl font-bold mb-8"></h1>
       <p className="text-xl mb-8">Welcome, {user?.username}!</p>
 
       {/* Stats Cards */}
