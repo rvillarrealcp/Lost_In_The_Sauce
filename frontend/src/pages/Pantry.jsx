@@ -319,14 +319,32 @@ const Pantry = () => {
                     <td>{item.unit}</td>
                     <td>{item.storage_location}</td>
                     <td>
-                      {item.expires_on && (
-                        <span
-                          className={`badge ${getExpirationStatus(
-                            item.expires_on
-                          )}`}
-                        >
-                          {item.expires_on}
-                        </span>
+                      {item.expires_on ? (
+                        (() => {
+                          const today = new Date();
+                          const expDate = new Date(item.expires_on);
+                          const daysUntil = Math.ceil(
+                            (expDate - today) / (1000 * 60 * 60 * 24)
+                          );
+                          let daysText = "";
+                          if (daysUntil < 0)
+                            daysText = `(${Math.abs(daysUntil)} days ago)`;
+                          else if (daysUntil === 0) daysText = "(today)";
+                          else if (daysUntil === 1) daysText = "(tomorrow)";
+                          else daysText = `(${daysUntil} days)`;
+
+                          return (
+                            <span
+                              className={`badge ${getExpirationStatus(
+                                item.expires_on
+                              )}`}
+                            >
+                              {item.expires_on} {daysText}
+                            </span>
+                          );
+                        })()
+                      ) : (
+                        <span className="text-gray-500">-</span>
                       )}
                     </td>
                     <td>

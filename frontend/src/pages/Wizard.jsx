@@ -194,20 +194,22 @@ const Wizard = () => {
         {/* Tabs */}
         <div className="flex gap-4 mb-6">
           <button
-            className={`btn ${
-              activeTab === "pantry" ? "btn-primary" : "btn-outline"
+            className={`btn btn-lg ${
+              activeTab === "pantry" ? "btn-primary" : "btn-outline btn-primary"
             }`}
             onClick={() => setActiveTab("pantry")}
           >
-            <Package size={18} /> Use My Pantry
+            <Package size={20} /> Use My Pantry
           </button>
           <button
-            className={`btn ${
-              activeTab === "classic" ? "btn-primary" : "btn-outline"
+            className={`btn btn-lg ${
+              activeTab === "classic"
+                ? "btn-primary"
+                : "btn-outline btn-primary"
             }`}
             onClick={() => setActiveTab("classic")}
           >
-            <Search size={18} /> Search Classic Recipes
+            <Search size={20} /> Search Classic Recipes
           </button>
         </div>
 
