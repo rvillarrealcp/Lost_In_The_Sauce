@@ -1,10 +1,5 @@
 import axios from 'axios';
-
-const API_URL = 'http://127.0.0.1:8000/api/';
-
-const getAuthHeaders = (token) => ({
-    headers: {Authorization: `Token ${token}`}
-});
+import { API_URL, getAuthHeaders } from './api';
 
 export const findRecipesByIngredients = async (token, ingredients) => {
     const response = await axios.post(

@@ -6,6 +6,9 @@ import {
   updatePantryItem,
   deletePantryItem,
 } from "../services/pantryService";
+import { getExpirationStatus } from "../utils/dateUtils";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorAlert from "../components/ErrorAlert";
 
 const Pantry = () => {
   const { token } = useAuth();
@@ -99,27 +102,11 @@ const Pantry = () => {
     }
   };
 
-  const getExpirationStatus = (expiresOn) => {
-    if (!expiresOn) return null;
-    const today = new Date();
-    const expDate = new Date(expiresOn);
-    const daysUntil = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-
-    if (daysUntil < 0) return "badge-error";
-    if (daysUntil <= 3) return "badge-warning";
-    return null;
-  };
-
   const filteredItems = items.filter((item) =>
     item.ingredient_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-base-200 p-8">
@@ -134,7 +121,7 @@ const Pantry = () => {
         </button>
       </div>
 
-      {error && <div className="alert alert-error mb-4">{error}</div>}
+      <ErrorAlert message={error} />
 
       <div className="form-control mb-4">
         <input

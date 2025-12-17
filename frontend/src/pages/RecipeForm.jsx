@@ -2,6 +2,8 @@ import { useState, useEffect} from 'react';
 import { useParams, useNavigate, Link} from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getRecipe, createRecipe, updateRecipe } from '../services/recipeService';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorAlert from '../components/ErrorAlert';
 
 const RecipeForm = () => {
     const { id } = useParams();
@@ -138,7 +140,7 @@ const RecipeForm = () => {
         }
     };
 
-    if (loading) return <div className='flex justify-center items-center h-screen'> Loading...</div>
+    if (loading) return <LoadingSpinner />
 
     return (
       <div className="min-h-scren bg-base-200 p-8">
@@ -152,7 +154,7 @@ const RecipeForm = () => {
             </Link>
           </div>
 
-          {error && <div className="alert alert-error mb-4">{error} </div>}
+          <ErrorAlert message={error} />
 
           <form onSubmit={handleSubmit} className="card bg-base-100 shadow-xl">
             <div className="card-body">
@@ -237,7 +239,8 @@ const RecipeForm = () => {
                       step="0.01"
                       value={ing.quantity}
                       onChange={(e) =>
-                        updateIngredient(index, "quantity", e.target.value)}
+                        updateIngredient(index, "quantity", e.target.value)
+                      }
                       className="input input-bordered w-20"
                     />
                   </div>
@@ -249,7 +252,8 @@ const RecipeForm = () => {
                       type="text"
                       value={ing.unit}
                       onChange={(e) =>
-                        updateIngredient(index, "unit", e.target.value)}
+                        updateIngredient(index, "unit", e.target.value)
+                      }
                       className="input input-bordered w-24"
                     />
                   </div>
@@ -261,7 +265,12 @@ const RecipeForm = () => {
                       type="text"
                       value={ing.ingredient_name}
                       onChange={(e) =>
-                        updateIngredient(index, "ingredient_name", e.target.value)}
+                        updateIngredient(
+                          index,
+                          "ingredient_name",
+                          e.target.value
+                        )
+                      }
                       className="input input-bordered"
                     />
                   </div>
@@ -273,72 +282,121 @@ const RecipeForm = () => {
                       type="text"
                       value={ing.prep_note}
                       onChange={(e) =>
-                        updateIngredient(index, "prep_note", e.target.value)}
+                        updateIngredient(index, "prep_note", e.target.value)
+                      }
                       className="input input-bordered"
                     />
                   </div>
-                  <button type='button' onClick={() => removeIngredient(index)} className='btn btn-error btn-sm'>x</button>
+                  <button
+                    type="button"
+                    onClick={() => removeIngredient(index)}
+                    className="btn btn-error btn-sm"
+                  >
+                    x
+                  </button>
                 </div>
               ))}
-              <button type='button' onClick={addIngredient} className='btn btn-outline btn-sm w-fit'>+ Add Ingredient</button>
+              <button
+                type="button"
+                onClick={addIngredient}
+                className="btn btn-outline btn-sm w-fit"
+              >
+                + Add Ingredient
+              </button>
 
               {/* Steps */}
               <div className="divider">Steps</div>
-                        {formData.steps.map((step, index) => (
-                            <div key={index} className="flex gap-2 items-end">
-                                <span className="badge badge-primary badge-lg mb-3">{step.step_number}</span>
-                                <div className="form-control flex-1">
-                                    <label className="label"><span className="label-text">Description</span></label>
-                                    <textarea
-                                        value={step.description}
-                                        onChange={(e) => updateStep(index, 'description', e.target.value)}
-                                        className="textarea textarea-bordered"
-                                        rows="2"
-                                    />
-                                </div>
-
-                <div className='form-control w-32'>
-                    <label className='label'><span className='label-text'>Timer (sec)</span></label>
-                    <input
-                        type='number'
-                        value={step.timer_seconds}
-                        onChange={(e) => updateStep(index, 'timer_seconds', e.target.value)}
-                        className='input input-bordered'
+              {formData.steps.map((step, index) => (
+                <div key={index} className="flex gap-2 items-end">
+                  <span className="badge badge-primary badge-lg mb-3">
+                    {step.step_number}
+                  </span>
+                  <div className="form-control flex-1">
+                    <label className="label">
+                      <span className="label-text">Description</span>
+                    </label>
+                    <textarea
+                      value={step.description}
+                      onChange={(e) =>
+                        updateStep(index, "description", e.target.value)
+                      }
+                      className="textarea textarea-bordered"
+                      rows="2"
                     />
-                </div>
-                <button type='button' onClick ={() => removeStep(index)} className='btn btn-error btn-sm mb-3'>x</button>
+                  </div>
+
+                  <div className="form-control w-32">
+                    <label className="label">
+                      <span className="label-text">Timer (sec)</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={step.timer_seconds}
+                      onChange={(e) =>
+                        updateStep(index, "timer_seconds", e.target.value)
+                      }
+                      className="input input-bordered"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeStep(index)}
+                    className="btn btn-error btn-sm mb-3"
+                  >
+                    x
+                  </button>
                 </div>
               ))}
-              <button type="button" onClick={addStep} className='btn btn-outline btn-sm w-fit'>+ Add Step</button>
+              <button
+                type="button"
+                onClick={addStep}
+                className="btn btn-outline btn-sm w-fit"
+              >
+                + Add Step
+              </button>
 
               {/* Instructions & Notes */}
-              <div className='divider'>Additional Info</div>
-              <div className='form-control'>
-                <label className='label'><span className='label-text'>Instructions</span></label>
+              <div className="divider">Additional Info</div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Instructions</span>
+                </label>
                 <textarea
-                    name='instructions'
-                    value={formData.instructions}
-                    onChange={handleChange}
-                    className='textarea textarea-bordered'
-                    rows='4'
+                  name="instructions"
+                  value={formData.instructions}
+                  onChange={handleChange}
+                  className="textarea textarea-bordered"
+                  rows="4"
                 />
               </div>
-              <div className='form-control'>
-                <label className='label'><span className='label-text'>Chef Notes</span></label>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Chef Notes</span>
+                </label>
                 <textarea
-                    name='chef_notes'
-                    value={formData.chef_notes}
-                    onChange={handleChange}
-                    className='textarea textarea-bordered'
-                    rows='3'
+                  name="chef_notes"
+                  value={formData.chef_notes}
+                  onChange={handleChange}
+                  className="textarea textarea-bordered"
+                  rows="3"
                 />
               </div>
 
               {/* Submit */}
-              <div className='card-actions justify-end mt-6'>
-                <Link to='/recipes' className='btn btn-ghost'>Cancel</Link>
-                <button type='submit' className='btn btn-primary' disabled={saving}>
-                    {saving ? 'Saving...' : (isEdit ? 'Update Recipe': 'Create Recipe')}
+              <div className="card-actions justify-end mt-6">
+                <Link to="/recipes" className="btn btn-ghost">
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={saving}
+                >
+                  {saving
+                    ? "Saving..."
+                    : isEdit
+                    ? "Update Recipe"
+                    : "Create Recipe"}
                 </button>
               </div>
             </div>

@@ -2,6 +2,7 @@ import { useState} from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { loginUser, getCurrentUser } from '../services/authService';
 import { useAuth } from '../context/AuthContext'
+import ErrorAlert from '../components/ErrorAlert';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -31,7 +32,7 @@ const Login = () => {
         <div className="card w-96 bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title justify-center text-2xl mb-4">Login</h2>
-            {error && <div className="alert alert-error text-sm">{error}</div>}
+            <ErrorAlert message={error} />
             <form onSubmit={handleSubmit}>
                 <div className='form-control'>
                     <label className='label'>

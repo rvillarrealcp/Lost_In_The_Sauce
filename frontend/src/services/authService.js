@@ -1,9 +1,9 @@
 import axios from 'axios';
+import { API_URL } from './api';
 
-const API_URL = 'http://127.0.0.1:8000/api/auth/';
 
 export const registerUser = async (username, email, password1, password2) => {
-    const response = await axios.post(`${API_URL}registration`, {
+    const response = await axios.post(`${API_URL}auth/registration`, {
         username,
         email,
         password1,
@@ -13,7 +13,7 @@ export const registerUser = async (username, email, password1, password2) => {
 };
 
 export const loginUser = async(username,password) => {
-    const response = await axios.post(`${API_URL}login/`, {
+    const response = await axios.post(`${API_URL}auth/login/`, {
         username,
         password
     });
@@ -21,14 +21,14 @@ export const loginUser = async(username,password) => {
 };
 
 export const logoutUser = async(token) => {
-    const response = await axios.post(`${API_URL}logout/`, {}, {
+    const response = await axios.post(`${API_URL}auth/logout/`, {}, {
         headers: { Authorization: `Token ${token}`}
     });
     return response.data;
 };
 
 export const getCurrentUser = async(token) => {
-    const response = await axios.get(`${API_URL}user/`, {
+    const response = await axios.get(`${API_URL}auth/user/`, {
         headers: {Authorization: `Token ${token}`}
     });
     return response.data

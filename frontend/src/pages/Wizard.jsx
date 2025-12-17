@@ -4,6 +4,8 @@ import { getPantryItems } from '../services/pantryService';
 import { createRecipe } from '../services/recipeService';
 import { findRecipesByIngredients, getRecipeDetails, searchClassicRecipes } from "../services/externalService";
 import { Package, Search } from 'lucide-react';
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorAlert from "../components/ErrorAlert";
 
 const Wizard = () => {
   const { token } = useAuth();
@@ -177,18 +179,13 @@ const Wizard = () => {
     item.ingredient_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
-
+  if (loading) return <LoadingSpinner />
+  
     return (
       <div className="min-h-screen bg-base-200 p-8">
         <h1 className="text-3xl font-bold mb-8">Zero-Waste Wizard</h1>
 
-        {error && <div className="alert alert-error mb-4">{error}</div>}
+        <ErrorAlert message={error} />
         {success && <div className="alert alert-success mb-4">{success}</div>}
 
         {/* Tabs */}

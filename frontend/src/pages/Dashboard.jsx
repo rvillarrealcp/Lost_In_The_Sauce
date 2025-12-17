@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getRecipes } from "../services/recipeService";
 import { getPantryItems } from "../services/pantryService";
+import { getExpirationLabel } from "../utils/dateUtils";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const Dashboard = () => {
   const { user, token, logout } = useAuth();
@@ -44,24 +46,8 @@ const Dashboard = () => {
     fetchStats();
   }, [token]);
 
-
-  const getExpirationLabel = (expiresOn) => {
-    const today = new Date();
-    const expDate = new Date(expiresOn);
-    const daysUntil = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-
-    if (daysUntil < 0) return { text: "Expired", class: "badge-error" };
-    if (daysUntil === 0) return { text: "Today", class: "badge-error" };
-    if (daysUntil === 1) return { text: "Tomorrow", class: "badge-warning" };
-    return { text: `${daysUntil} days`, class: "badge-warning" };
-  };
-
   if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
+    return <LoadingSpinner/>
 
   return (
     <div className="min-h-screen bg-base-200 p-8">

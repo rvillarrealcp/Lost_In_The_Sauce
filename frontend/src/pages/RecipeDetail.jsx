@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getRecipe, deleteRecipe } from "../services/recipeService";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const RecipeDetail = () => {
   const { id } = useParams();
@@ -53,11 +54,8 @@ const RecipeDetail = () => {
   };
 
   if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
+    return <LoadingSpinner />
+    
   if (error) return <div className="alert alert-error m-8">{error}</div>;
   if (!recipe)
     return <div className="alert alert-warning m-8">Recipe not found</div>;
