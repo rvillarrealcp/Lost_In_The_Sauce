@@ -134,16 +134,66 @@ const Wizard = () => {
     setError('');
     setSuccess('');
     try{
+      const parseMeasure = (measure) => {
+        if (!measure || !measure.trim()) {
+          return { quantity: 0, unit: "to taste" };
+        }
+
+        const trimmed = measure.trim();
+
+        // Handle fractions like "1/2", "1/4", "3/4"
+        const fractionMap = {
+          "1/2": 0.5,
+          "1/3": 0.33,
+          "2/3": 0.67,
+          "1/4": 0.25,
+          "3/4": 0.75,
+          "1/8": 0.125,
+        };
+
+        // Pattern: "1 1/2 cups" or "1/2 cup" or "2 cups" or "1 cup"
+        const mixedFractionMatch = trimmed.match(/^(\d+)\s+(\d+\/\d+)\s*(.*)$/);
+        const fractionMatch = trimmed.match(/^(\d+\/\d+)\s*(.*)$/);
+        const numberMatch = trimmed.match(/^([\d.]+)\s*(.*)$/);
+
+        if (mixedFractionMatch) {
+          // "1 1/2 cups" -> 1.5
+          const whole = parseInt(mixedFractionMatch[1]);
+          const frac = fractionMap[mixedFractionMatch[2]] || 0;
+          return {
+            quantity: whole + frac,
+            unit: mixedFractionMatch[3] || "unit",
+          };
+        } else if (fractionMatch) {
+          // "1/2 cup" -> 0.5
+          const frac = fractionMap[fractionMatch[1]] || 0;
+          return {
+            quantity: frac,
+            unit: fractionMatch[2] || "unit",
+          };
+        } else if (numberMatch) {
+          // "2 cups" or "2.5 cups"
+          return {
+            quantity: parseFloat(numberMatch[1]),
+            unit: numberMatch[2] || "unit",
+          };
+        }
+
+        // Can't parse - return as unit description
+        return { quantity: 0, unit: trimmed || "to taste" };
+      };
+
       const ingredients = [];
       for (let i = 1; i <= 20; i++) {
         const ingredient = meal[`strIngredient${i}`];
-        const measure = meal[`strMeasure${i}`]
+        const measure = meal[`strMeasure${i}`];
         if (ingredient && ingredient.trim()) {
+          const parsed = parseMeasure(measure);
           ingredients.push({
             ingredient_name: ingredient.trim(),
-            quantity:0,
-            unit: measure?.trim() || 'to taste',
-            prep_note: ''
+            quantity: parsed.quantity,
+            unit: parsed.unit,
+            prep_note: "",
           });
         }
       }

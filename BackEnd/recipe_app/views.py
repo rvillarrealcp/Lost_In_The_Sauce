@@ -79,10 +79,6 @@ class PantryDetailView(generics.RetrieveUpdateDestroyAPIView):
         return PantryItem.objects.filter(user=self.request.user)
 
 
-# ========================
-# External API Proxy Views (now class-based)
-# ========================
-
 class FindRecipesByIngredientsView(APIView):
     """Proxy to Spoonacular findByIngredients endpoint"""
     permission_classes = [IsAuthenticated]

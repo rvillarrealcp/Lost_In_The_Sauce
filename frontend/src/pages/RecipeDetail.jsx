@@ -102,22 +102,39 @@ const RecipeDetail = () => {
               )}
             </div>
             {/*Scaling Slider */}
-            <div className="form-control mt-6">
-              <label className="label">
-                <span className="label-text font-semibold">
-                  Scale Recipe: {scaleFactor} servings
-                </span>
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="20"
-                value={scaleFactor}
-                onChange={(e) => setScaleFactor(Number(e.target.value))}
-                className="range range-primary"
-              />
+            {/* Scaling */}
+            {/* Scaling */}
+            <div className="flex items-center gap-4 mt-6">
+              <span className="font-semibold">Scale to:</span>
+              <div className="flex items-center">
+                <button
+                  className="btn btn-sm btn-outline rounded-r-none"
+                  onClick={() => setScaleFactor(Math.max(1, scaleFactor - 1))}
+                  disabled={scaleFactor <= 1}
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={scaleFactor}
+                  onChange={(e) =>
+                    setScaleFactor(Math.max(1, Number(e.target.value) || 1))
+                  }
+                  className="input input-bordered w-16 text-center rounded-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <button
+                  className="btn btn-sm btn-outline rounded-l-none"
+                  onClick={() => setScaleFactor(scaleFactor + 1)}
+                >
+                  +
+                </button>
+              </div>
+              <span className="text-gray-500">
+                servings (original: {recipe.yield_amount})
+              </span>
             </div>
-            {/* Ingredients */}
             {/* Ingredients */}
             {recipe.ingredients && recipe.ingredients.length > 0 && (
               <div className="mt-6">
